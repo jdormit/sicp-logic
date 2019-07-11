@@ -11,12 +11,12 @@
 
 (defn instantiate [q frame unbound-var-handler]
   "Instantiates the query `q` with the variables bound in `frame`."
-  (letfn [(copy (fn [exp])
+  (letfn [(copy [exp]
                (cond (var? exp) (let [binding-value (binding-in-frame exp frame)]
                                   (if binding-value
                                     (copy binding-value)
                                     (unbound-var-handler exp frame)))
-                     (seq? exp) (cons (copy (first exp)) (copy (rest exp)))
+                     (sequential? exp) (cons (copy (first exp)) (copy (rest exp)))
                      :else exp))]
     (copy q)))
 
@@ -77,17 +77,36 @@
       (= q-type 'and) (conjoin (rest q) input-frames)
       (= q-type 'or) (disjoin (rest q) input-frames)
       (= q-type 'not) (negate (rest q) input-frames)
-      (= q-type 'lisp-value (list-value (rest q) input-frames))
+      (= q-type 'lisp-value) (lisp-value (rest q) input-frames)
       :else (simple-query q input-frames))))
 
-(defn contract-question-mark [v])
+(defn contract-question-mark [v]
+  (symbol
+   (str "?"
+        (second v))))
+
+(defn map-over-symbols [proc exp]
+  (cond
+    (and (sequential? exp) (not (empty? exp)))
+    (cons (map-over-symbols proc (first exp))
+          (map-over-symbols proc (rest exp)))
+    (symbol? exp) (proc exp)
+    :else exp))
+
+(defn expand-question-mark [sym]
+  (let [chars (str sym)]
+    (if (= "?" (subs chars 0 1))
+      ['? (symbol (subs chars 1))]
+      sym)))
+
+(defn query-syntax-process [q]
+  (map-over-symbols #'expand-question-mark q))
 
 (defmacro query [q]
   "Queries the database for assertions that match the query."
   `(map (fn [frame]
           (instantiate (quote ~q) frame (fn [v f] (contract-question-mark v))))
-        ;; TODO expand variable names into [? var]
-    (qeval (quote ~q) [{}])))
+    (qeval (query-syntax-process (quote ~q)) [{}])))
 
 (defmacro assert! []
   "Adds a new assertion to the database.")
