@@ -19,9 +19,11 @@
             (disjoin db (rest disjuncts) input-frames))))
 
 (defn negate [db operands input-frames]
-  (filter
+  (mapcat
    (fn [frame]
-     (empty? (qeval db (first operands) [frame])))
+     (if (empty? (qeval db (first operands) [frame]))
+       [frame]
+       []))
    input-frames))
 
 (defn execute [exp]
