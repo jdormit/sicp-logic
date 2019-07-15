@@ -46,7 +46,8 @@
    input-frames))
 
 (defn simple-query [db q input-frames]
-  "Processes a simple query, producing a sequence of frames with bindings for the variables in `q`."
+  "Processes a simple query, producing a sequence of frames with
+   bindings for the variables in `q`."
   (mapcat
    (fn [frame]
      (concat
