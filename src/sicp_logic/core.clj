@@ -27,10 +27,11 @@
 
 (defmacro query [db q]
   "Queries the database for assertions that match the query."
-  (letfn [(process-frame [q frame]
-            (instantiate q frame (fn [v f] (contract-question-mark v))))]
-    `(map ~process-frame
-          (qeval ~db (query-syntax-process (quote ~q)) [{}]))))
+  `(map (fn [frame#]
+          (instantiate (query-syntax-process (quote ~q))
+                       frame#
+                       (fn [v# f#] (contract-question-mark v#))))
+    (qeval ~db (query-syntax-process (quote ~q)) [{}])))
 
 (defn assert! [db assertion]
   "Adds a new assertion to the database."

@@ -19,7 +19,7 @@
    (:index db)
    (fn [index]
      (let [index-value (or (get index (first assertion)) [])]
-       (conj index-value assertion)))))
+       (assoc index (first assertion) (conj index-value assertion))))))
 
 
 (defn store! [db assertion]

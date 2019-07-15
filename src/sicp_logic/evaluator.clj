@@ -58,8 +58,8 @@
    assertions and rules from the `db`."
   (let [q-type (first q)]
     (cond
-      (= q-type 'and) (conjoin (rest q) input-frames)
-      (= q-type 'or) (disjoin (rest q) input-frames)
-      (= q-type 'not) (negate (rest q) input-frames)
+      (= q-type 'and) (conjoin db (rest q) input-frames)
+      (= q-type 'or) (disjoin db (rest q) input-frames)
+      (= q-type 'not) (negate db (rest q) input-frames)
       (= q-type 'lisp-value) (lisp-value (rest q) input-frames)
       :else (simple-query db q input-frames))))
