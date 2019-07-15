@@ -21,7 +21,7 @@
 (defn negate [db operands input-frames]
   (filter
    (fn [frame]
-     (empty? (qeval db operands [frame])))
+     (empty? (qeval db (first operands) [frame])))
    input-frames))
 
 (defn execute [exp]
@@ -39,7 +39,8 @@
            call
            frame
            (fn [v f]
-             (throw (IllegalArgumentException. (str "Unknown pattern variable -- LISP-VALUE: " v))))))
+             (throw
+              (IllegalArgumentException. (str "Unknown pattern variable -- LISP-VALUE: " v))))))
        [frame]
        []))
    input-frames))
