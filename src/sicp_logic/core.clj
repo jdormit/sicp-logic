@@ -1,6 +1,6 @@
 (ns sicp-logic.core
   (:require [sicp-logic.binding :refer [instantiate]]
-            [sicp-logic.db :refer [add-assertion add-rule]]
+            [sicp-logic.db :as db]
             [sicp-logic.evaluator :refer [qeval]]))
 
 (defn contract-question-mark [v]
@@ -36,10 +36,17 @@
 
 (defn assert! [db assertion]
   "Adds a new assertion to the database."
-  (add-assertion db assertion))
+  (db/add-assertion db assertion))
+
+(defn add-rule! [db rule]
+  "Adds a new rule to the database."
+  (db/add-rule db (query-syntax-process rule)))
 
 (defmacro defrule [db conclusion body]
-  "Adds a new rule to the database."
-  (let [processed-conclusion (query-syntax-process conclusion)
-        processed-body (query-syntax-process body)]
-    `(add-rule ~db (quote [~processed-conclusion ~processed-body]))))
+  "Convenience macro to add a new rule to the database.
+
+   Usage:
+       (defrule [grandparent ?x ?y]
+         (and [parent ?x ?z]
+              [parent ?z ?y]))"
+  `(add-rule! ~db (quote [conclusion body])))
