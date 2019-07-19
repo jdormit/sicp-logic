@@ -1,38 +1,69 @@
 (ns sicp-logic.match
   (:require [sicp-logic.binding :refer [binding-in-frame extend var?]]))
 
-(declare pattern-match)
+(defn depends-on? [exp var frame]
+  "Returns `true` if `exp` contains `var` in the context
+   of `frame`."
+  (letfn [(tree-walk [node]
+            (cond
+              (var? node) (if (= var node)
+                            true
+                            (let [binding-value (binding-in-frame node frame)]
+                              (if binding-value
+                                (tree-walk binding-value)
+                                false)))
+              (and (sequential? node) (not (empty? node)))
+              (or (tree-walk (first node))
+                  (tree-walk (rest node)))
+              :else false))]
+    (tree-walk exp)))
 
-(defn extend-if-consistent [var data frame]
-  "Extends `frame` by binding `var` to `data` as long as this is
-   consistent with the bindings already in `frame`."
+(declare unify-match)
+
+(defn extend-if-possible [var val frame]
+  "Extends the frame by binding `var` to `val` unless that
+   results in an invalid state."
   (let [binding-value (binding-in-frame var frame)]
-    (if binding-value
-      (pattern-match binding-value data frame)  ;; recursive call to bind any variables in the binding-value
-      (extend var data frame))))
+    (cond
+      ;; If the var is already bound in the frame, attempt to unify
+      ;; its value with the new value
+      binding-value (unify-match binding-value val frame)
+      ;; If the the value is a variable that is already bound, attempt
+      ;; to unify its value with the variable currently being bound
+      (var? val) (let [binding-value (binding-in-frame val frame)]
+                   (if binding-value
+                     (unify-match var binding-value frame)
+                     (extend var val frame)))
+      ;; If the var is found somewhere in the val, fail, since it
+      ;; is not possible to generally solve equations of the form
+      ;; y = <expression involving y>
+      (depends-on? val var frame) :failed
+      :else (extend var val frame))))
 
-(defn pattern-match [pattern data frame]
-  "Matches `pattern` against `data`, returning either a new frame
-   with the pattern variables bound or the keyword :failed if matching
-   fails"
+(defn unify-match [pattern1 pattern2 frame]
+  "Unifies `pattern1` with `pattern2` by binding variables
+   in `frame` such that both patterns could have the same
+   value. Some pattern variables in either pattern may remain
+   unbound.
+   
+   For example, (unify-match '[?a ?b foo] '[?c [?d bar] ?e] {}) yields
+   the new frame '{a [?c], b [?d bar], e foo}."
   (cond
-    ;; If the frame has already failed, fail
+    ;; If the unification has already failed, fail
     (= frame :failed) :failed
-    ;; If the pattern already equals the data,
-    ;; the frame already has the correct bindings
-    (= pattern data) frame
-    ;; If the pattern is a variable, try to extend the frame by binding that
-    ;; variable to the data
-    (var? pattern) (extend-if-consistent pattern data frame)
-    ;; If the pattern and data are both lists, recurse into the list
-    (and (sequential? pattern) (sequential? data))
-    (pattern-match
-     (rest pattern)
-     (rest data)
-     (pattern-match (first pattern)
-                    (first data)
-                    frame))
-    ;; Otherwise we can't match this pattern
+    ;; If the patterns are already equal, the frame already
+    ;; has the correct bindings
+    (= pattern1 pattern2) frame
+    ;; If pattern1 is a variable, try to bind it to pattern2
+    (var? pattern1) (extend-if-possible pattern1 pattern2 frame)
+    ;; If pattern1 is not a variable but pattern2 is, try to bind
+    ;; pattern2 to pattern1
+    (var? pattern2) (extend-if-possible pattern2 pattern1 frame)
+    ;; If both patterns are lists, recursively unify them
+    (and (sequential? pattern1) (sequential? pattern2))
+    (unify-match (rest pattern1)
+                 (rest pattern2)
+                 (unify-match (first pattern1)
+                              (first pattern2)
+                              frame))
     :else :failed))
-
-(defn unify-match [pattern data frame])

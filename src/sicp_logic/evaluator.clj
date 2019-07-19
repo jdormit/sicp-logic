@@ -1,6 +1,6 @@
 (ns sicp-logic.evaluator
   (:require [sicp-logic.assertions :refer [find-assertions]]
-            [sicp-logic.binding :refer [instantiate]]
+            [sicp-logic.binding :refer [instantiate var?]]
             [sicp-logic.db :refer [fetch-rules]]
             [sicp-logic.match :refer [unify-match]]))
 
@@ -60,10 +60,10 @@
                      (let [var-name (second var)
                            binding (get @bindings var-name)]
                        (if binding
-                         binding
+                         ['? binding]
                          (let [new-binding (gensym var-name)]
                            (swap! bindings (fn [m] (assoc m var-name new-binding)))
-                           new-binding))))
+                           ['? new-binding]))))
         rename-vars (fn rename-vars [exp]
                       (cond
                         (var? exp) (rename-var exp)
@@ -75,12 +75,14 @@
 
 
 (defn conclusion [rule]
-  "Selects the rule's conclusion")
+  "Selects the rule's conclusion"
+  (first rule))
 
 (defn rule-body [rule]
-  "Selects the rule's body")
+  "Selects the rule's body"
+  (or (second rule) :always-true))
 
-(defn apply-a-rule [rule query frame]
+(defn apply-a-rule [db rule query frame]
   "Applies the `rule` to the `query` in the
    `frame` by unifying the query with the rule to
    produce a new frame then evaluating the body
@@ -91,13 +93,14 @@
                                   frame)]
     (if (= unify-result :failed)
       []
-      (qeval (rule-body clean-rule)
+      (qeval db
+             (rule-body clean-rule)
              [unify-result]))))
 
 (defn apply-rules [db query frame]
   (mapcat
    (fn [rule]
-     (apply-a-rule rule query frame))
+     (apply-a-rule db rule query frame))
    (fetch-rules db query frame)))
 
 (defn simple-query [db q input-frames]
@@ -119,4 +122,5 @@
       (= q-type 'or) (disjoin db (rest q) input-frames)
       (= q-type 'not) (negate db (rest q) input-frames)
       (= q-type 'lisp-value) (lisp-value (rest q) input-frames)
+      (= q-type :always-true) input-frames
       :else (simple-query db q input-frames))))

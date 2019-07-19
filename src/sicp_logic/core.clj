@@ -1,6 +1,6 @@
 (ns sicp-logic.core
   (:require [sicp-logic.binding :refer [instantiate]]
-            [sicp-logic.db :refer [add-assertion]]
+            [sicp-logic.db :refer [add-assertion add-rule]]
             [sicp-logic.evaluator :refer [qeval]]))
 
 (defn contract-question-mark [v]
@@ -27,15 +27,19 @@
 
 (defmacro query [db q]
   "Queries the database for assertions that match the query."
-  `(map (fn [frame#]
-          (instantiate (query-syntax-process (quote ~q))
-                       frame#
-                       (fn [v# f#] (contract-question-mark v#))))
-    (qeval ~db (query-syntax-process (quote ~q)) [{}])))
+  (let [processed-q (query-syntax-process q)]
+    `(map (fn [frame#]
+            (instantiate (quote ~processed-q)
+                         frame#
+                         (fn [v# f#] (contract-question-mark v#))))
+          (qeval ~db (quote ~processed-q) [{}]))))
 
 (defn assert! [db assertion]
   "Adds a new assertion to the database."
   (add-assertion db assertion))
 
-(defmacro defrule []
-  "Adds a new rule to the database.")
+(defmacro defrule [db conclusion body]
+  "Adds a new rule to the database."
+  (let [processed-conclusion (query-syntax-process conclusion)
+        processed-body (query-syntax-process body)]
+    `(add-rule ~db (quote [~processed-conclusion ~processed-body]))))

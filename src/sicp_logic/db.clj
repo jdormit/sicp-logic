@@ -9,5 +9,5 @@
     "Stores an assertion (a fact) in the database.")
   (fetch-rules [db query frame]
     "Fetches rules whose conditions may unify with the given query and frame")
-  (add-rules [db rule]
+  (add-rule [db rule]
     "Adds a new rule to the database"))
