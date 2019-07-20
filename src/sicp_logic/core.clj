@@ -42,11 +42,14 @@
   "Adds a new rule to the database."
   (db/add-rule db (query-syntax-process rule)))
 
-(defmacro defrule! [db conclusion body]
+(defmacro defrule!
   "Convenience macro to add a new rule to the database.
 
    Usage example:
        (defrule [grandparent ?x ?y]
          (and [parent ?x ?z]
               [parent ?z ?y]))"
-  `(add-rule! ~db (quote [~conclusion ~body])))
+  ([db conclusion]
+   `(add-rule! ~db (quote [~conclusion])))
+  ([db conclusion body]
+   `(add-rule! ~db (quote [~conclusion ~body]))))
