@@ -1,5 +1,5 @@
 (ns sicp-logic.tests
-  (:require [clojure.test :refer :all]
+  (:require [clojure.test :as test :refer [deftest is]]
             [sicp-logic.core :as logic]
             [sicp-logic.db.memory :as memdb]))
 
@@ -46,8 +46,8 @@
                 (can-do-job (administration secretary) (administration big wheel))]
         rules '[((same ?x ?x))
                 ((lives-near ?person-1 ?person-2)
-                 (and (address ?person-1 (?town . ?rest-1))
-                      (address ?person-2 (?town . ?rest-2))
+                 (and (address ?person-1 (?town & ?rest-1))
+                      (address ?person-2 (?town & ?rest-2))
                       (not (same ?person-1 ?person-2))))
                 ((wheel ?person)
                  (and (supervisor ?middle-manager ?person)
@@ -122,5 +122,9 @@
            '[(lives-near (Reasoner Louis) (Bitdiddle Ben))
              (lives-near (Aull DeWitt) (Bitdiddle Ben))]))
     (is (= (logic/query db (and [job ?x [computer programmer]]
-                                [lives-near ?x [Bitdiddle Ben]]))
-           '[(lives-near (Reasoner Louis) (Bitdiddle Ben))]))))
+                                [lives-near ?x [Hacker Alyssa P]]))
+           '[(and (job (Fect Cy D) (computer programmer))
+                  (lives-near (Fect Cy D) (Hacker Alyssa P)))]))))
+
+(defn run-tests []
+  (test/run-tests 'sicp-logic.tests))
