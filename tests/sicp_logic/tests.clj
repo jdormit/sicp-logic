@@ -71,7 +71,13 @@
            '[(job (Bitdiddle Ben) (computer wizard))
              (job (Hacker Alyssa P) (computer programmer))
              (job (Fect Cy D) (computer programmer))
-             (job (Tweakit Lem E) (computer technician))]))))
+             (job (Tweakit Lem E) (computer technician))]))
+    (is (= (logic/query db [?key [Bitdiddle Ben] ?value])
+           '[(address (Bitdiddle Ben) (Slumerville (Ridge Road) 10))
+             (job (Bitdiddle Ben) (computer wizard))
+             (salary (Bitdiddle Ben) 60000)
+             (supervisor (Bitdiddle Ben) (Warbucks Oliver))]))))
+             
 
 (deftest compound-queries
   (let [db (memdb/new-db)]
