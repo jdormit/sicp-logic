@@ -40,19 +40,20 @@
            index-value (or (get index index-key) [])]
        (assoc index index-key (conj index-value rule))))))
 
-(defrecord InMemoryDB [assertion-index rule-index assertion-store rule-store]
+(defrecord InMemoryDB [assertion-index rule-index assertion-store]
   FactDB
   (fetch-assertions [db query frame]
     (let [instantiated (instantiate query frame (fn [v f] v))]
-      (if (use-asserttion-index? query)
+      (if (use-assertion-index? query)
         (get-indexed-assertions db query)
         (get-all-assertions db))))
   (add-assertion [db assertion]
-    (index-assertion! db assertion))
+    (index-assertion! db assertion)
+    (store-assertion! db assertion))
   (fetch-rules [db query frame]
     (get-indexed-rules db query))
   (add-rule [db rule]
     (index-rule! db rule)))
 
 (defn new-db []
-  (->InMemoryDB (atom {}) (atom {}) (atom []) (atom [])))
+  (->InMemoryDB (atom {}) (atom {}) (atom [])))
