@@ -80,7 +80,7 @@
 
 (defn rule-body [rule]
   "Selects the rule's body"
-  (or (second rule) :always-true))
+  (or (second rule) [:always-true]))
 
 (defn apply-a-rule [db rule query frame]
   "Applies the `rule` to the `query` in the
