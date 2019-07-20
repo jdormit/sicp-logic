@@ -98,7 +98,7 @@ user> (logic/query db (or [address ?who [Cambridge [Ames Street] 3]]
   (address (Bitdiddle Ben) (Slumerville (Ridge Road) 10))))
 ```
 
-The query language also support "rest-variables" in the same style as Clojure's function definitions or sequence destructuring via the `&` symbol. A query of the form `[?var1 & ?rest]` would match any assertion of length 2 or greater, matching the first item in the assertion to `?var1` and binding `?rest` to a list consisting of the remaining items in the assertion. The usefulness of this is best illustrated with an example:
+The query language also support "rest-variables" in the same style as Clojure's function definitions or sequence destructuring via the `&` symbol. A query of the form `[?var1 & ?rest]` would match any assertion of length 2 or greater, binding `var1` to the first item in the assertion and binding `rest` to a list consisting of the remaining items in the assertion. The usefulness of this is best illustrated with an example:
 
 ``` clojure
 user> (logic/query db [address ?who [Cambridge & ?rest]])
