@@ -142,4 +142,6 @@ The result of performing unification on all the relevant assertions and rules is
 
 `And` queries operate by taking the stream of frames from the first clause of the query and evaluating the next clause in the query in the context of each of the frames from the first query, and so on. `Or` queries are similar, except that they simply evaluate all of the clauses simultaneously and then concatenate the results into a single sequence of frames at the end. `Not` queries work by taking the sequence of frames passed to them, evaluating their clauses in the context of each of those frames, and returning only those frames for which their evaluation returns no bindings. `Lisp-value` queries work the same way, except they call into Clojure directly to evaluate the Lisp predicate, returning only those frames for which the predicate returns `true`.
 
+## Further reading
+
 If this piqued your interest and you want to peek under the hood, the source code for this project has comments in some key parts of the algorithm. To really dive in, I highly recommend reading [Chapter 4.4 of SICP](https://mitpress.mit.edu/sites/default/files/sicp/full-text/book/book-Z-H-29.html#%_sec_4.4). Well, honestly you should just read the whole book - it totally changed the way I think about programming and it remains relevant and useful even though it was first published in the 80s.
