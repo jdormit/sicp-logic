@@ -54,6 +54,10 @@
     ;; If the patterns are already equal, the frame already
     ;; has the correct bindings
     (= pattern1 pattern2) frame
+    ;; If pattern1 is a rest-pattern (e.g. [& ?rest]), unify its rest
+    ;; part with pattern2 in the current frame
+    (and (sequential? pattern1) (= (first pattern1) '&))
+    (unify-match (second pattern1) pattern2 frame)
     ;; If pattern1 is a variable, try to bind it to pattern2
     (var? pattern1) (extend-if-possible pattern1 pattern2 frame)
     ;; If pattern1 is not a variable but pattern2 is, try to bind
