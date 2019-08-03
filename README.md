@@ -40,11 +40,11 @@ user> (let [facts '[[address [Bitdiddle Ben] [Slumerville [Ridge Road] 10]]
                     [job [Hacker Alyssa P] [computer programmer]]
                     [salary [Hacker Alyssa P] 40000]
                     [supervisor [Hacker Alyssa P] [Bitdiddle Ben]]
-					[address [Fect Cy D] [Cambridge [Ames Street] 3]]
-					[job [Fect Cy D] [computer programmer]]
-					[salary [Fect Cy D] 35000]
-					[supervisor [Fect Cy D] [Bitdiddle Ben]]]]
-		(doseq [fact facts]
+                    [address [Fect Cy D] [Cambridge [Ames Street] 3]]
+                    [job [Fect Cy D] [computer programmer]]
+                    [salary [Fect Cy D] 35000]
+                    [supervisor [Fect Cy D] [Bitdiddle Ben]]]]
+        (doseq [fact facts]
           (logic/assert! db fact)))
 nil
 ```
