@@ -156,5 +156,33 @@
              '[{x [Reasoner Louis]}
                {x [Aull DeWitt]}])))))
 
+(deftest infinite-loop
+  (testing "Does this overflow the stack?"
+    (let [db (memdb/new-db)
+          facts '[[follows user1 user2]
+                  [follows user1 user3]
+                  [follows user2 user1]
+                  [follows user3 user1]
+                  [follows user3 user2]
+                  [follows user1 user4]
+                  [follows user4 user2]
+                  [follows user2 user4]]]
+      (doseq [fact facts]
+        (logic/assert! db fact))
+      (logic/defrule! db [same ?x ?x])
+      (logic/defrule! db [common-follows ?p1 ?p2 [?x]]
+        (and [follows ?p1 ?x]
+             [follows ?p2 ?x]
+             (not [same ?p1 ?p2])))
+      (logic/defrule! db [common-follows ?p1 ?p2 [?x & ?xs]]
+        (and [follows ?p1 ?x]
+             [follows ?p2 ?x]
+             [common-follows ?p1 ?p2 ?xs]
+             (not [same ?p1 ?p2])))
+      (is (= (logic/query db [common-follows ?who user2 [user4]])
+             '[[common-follows user1 user2 [user4]]]))
+      (is (= (logic/query db [common-follows user2 user1 [user4]])
+             '[[common-follows user2 user1 [user4]]])))))
+
 (defn run-tests []
   (test/run-tests 'sicp-logic.tests))
