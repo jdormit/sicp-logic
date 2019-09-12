@@ -1,5 +1,5 @@
 (ns sicp-logic.tests
-  (:require [clojure.test :as test :refer [deftest is]]
+  (:require [clojure.test :as test :refer [deftest is testing]]
             [sicp-logic.core :as logic]
             [sicp-logic.db.memory :as memdb]))
 
@@ -116,15 +116,45 @@
                   (lisp-value > 75000 30000))]))))
 
 (deftest rules
-  (let [db (memdb/new-db)]
-    (setup-sicp-dataset! db)
-    (is (= (logic/query db [lives-near ?x [Bitdiddle Ben]])
-           '[(lives-near (Reasoner Louis) (Bitdiddle Ben))
-             (lives-near (Aull DeWitt) (Bitdiddle Ben))]))
-    (is (= (logic/query db (and [job ?x [computer programmer]]
-                                [lives-near ?x [Hacker Alyssa P]]))
-           '[(and (job (Fect Cy D) (computer programmer))
-                  (lives-near (Fect Cy D) (Hacker Alyssa P)))]))))
+  (testing "Basic rules"
+    (let [db (memdb/new-db)]
+     (setup-sicp-dataset! db)
+     (is (= (logic/query db [lives-near ?x [Bitdiddle Ben]])
+            '[(lives-near (Reasoner Louis) (Bitdiddle Ben))
+              (lives-near (Aull DeWitt) (Bitdiddle Ben))]))
+     (is (= (logic/query db (and [job ?x [computer programmer]]
+                                 [lives-near ?x [Hacker Alyssa P]]))
+            '[(and (job (Fect Cy D) (computer programmer))
+                   (lives-near (Fect Cy D) (Hacker Alyssa P)))]))))
+  (testing "More complicated rules"
+    (let [db (memdb/new-db)]
+      (logic/defrule! db [append-to-form [] ?y ?y])
+      (logic/defrule! db [append-to-form [?u & ?v] ?y [?u & ?z]]
+        (append-to-form ?v ?y ?z))
+      (is (= (logic/query db [append-to-form [a b] [c d] ?z])
+             '[[append-to-form [a b] [c d] [a & [b & [c d]]]]]))
+      (is (= (logic/query db [append-to-form [a ?x] [c d] [a b c d]])
+             '[[append-to-form [a b] [c d] [a b c d]]])))))
+
+(deftest raw-query
+  (testing "Raw queries"
+    (let [db (memdb/new-db)]
+      (setup-sicp-dataset! db)
+      (is (= (logic/query-results db '[job ?x [computer programmer]])
+             '[{x [Hacker Alyssa P]}
+               {x [Fect Cy D]}]))
+      (is (= (logic/query-results db '[job ?x [computer ?type]])
+             '[{x [Bitdiddle Ben]
+                type wizard}
+               {x [Hacker Alyssa P]
+                type programmer}
+               {x [Fect Cy D]
+                type programmer}
+               {x [Tweakit Lem E]
+                type technician}]))
+      (is (= (logic/query-results db '[lives-near ?x [Bitdiddle Ben]])
+             '[{x [Reasoner Louis]}
+               {x [Aull DeWitt]}])))))
 
 (defn run-tests []
   (test/run-tests 'sicp-logic.tests))

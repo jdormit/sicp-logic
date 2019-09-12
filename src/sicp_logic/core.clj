@@ -1,5 +1,5 @@
 (ns sicp-logic.core
-  (:require [sicp-logic.binding :refer [instantiate]]
+  (:require [sicp-logic.binding :refer [instantiate var?]]
             [sicp-logic.db :as db]
             [sicp-logic.evaluator :refer [qeval]]))
 
@@ -25,14 +25,43 @@
 (defn query-syntax-process [q]
   (map-over-symbols #'expand-question-mark q))
 
-(defmacro query [db q]
+(defn sanitize-frame [q frame]
+  "Fully resolves all variables in q and returns a map
+   of the variable names to their bindings"
+  (letfn [(vars [acc node]
+            (cond
+              (var? node) (conj acc [(second node) node])
+              (and (sequential? node) (not (empty? node)))
+              (concat
+               (vars acc (first node))
+               (vars acc (rest node)))))]
+    (let [qvars (vars [] q)]
+      (into {} (map vec (instantiate qvars frame (fn [v f] v)))))))
+
+(defn query-results [db q]
   "Queries the database for assertions that match the query."
   (let [processed-q (query-syntax-process q)]
-    `(map (fn [frame#]
-            (instantiate (quote ~processed-q)
-                         frame#
-                         (fn [v# f#] (contract-question-mark v#))))
-          (qeval ~db (quote ~processed-q) [{}]))))
+    (map (fn [frame]
+           (sanitize-frame processed-q frame))
+         (qeval db processed-q [{}]))))
+
+(defn instantiate-query [q frames]
+  "Fills in the query with variables from frames"
+  (let [processed-q (query-syntax-process q)]
+    (map (fn [frame]
+           (instantiate processed-q
+                        frame
+                        (fn [v f] (contract-question-mark v))))
+         frames)))
+
+(defn query* [db q]
+  (instantiate-query q
+    (query-results db q)))
+
+(defmacro query [db q]
+  "Convenience macro to query the database for assertions
+   that match the query."
+  `(query* ~db (quote ~q)))
 
 (defn assert! [db assertion]
   "Adds a new assertion to the database."
